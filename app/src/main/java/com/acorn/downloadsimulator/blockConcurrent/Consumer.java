@@ -18,13 +18,12 @@ public abstract class Consumer<T> implements Runnable {
     public void run() {
         try {
             while (!mDispatcher.isFinished()) {
-                LogUtil.i("Consumer take");
                 T t = mStorage.take();
                 execute(t, mDispatcher);
             }
         } catch (InterruptedException e) {
 //            e.printStackTrace();
-            LogUtil.e("线程" + Thread.currentThread().getName() + "终止");
+            LogUtil.e("线程终止");
         }
     }
 

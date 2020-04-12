@@ -1,5 +1,8 @@
 package com.acorn.downloadsimulator.bean;
 
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import androidx.annotation.NonNull;
 
 /**
@@ -11,11 +14,22 @@ public class Page {
     private String chapterName;
     //假装自己是bitmap
     private String bitmap;
+    private boolean isDownloaded;
+    //失败次数
+    private final AtomicInteger failTimes = new AtomicInteger();
 
     public Page(String url, String pageName, String chapterName) {
         this.url = url;
         this.pageName = pageName;
         this.chapterName = chapterName;
+    }
+
+    public synchronized boolean isDownloaded() {
+        return isDownloaded;
+    }
+
+    public synchronized void setDownloaded(boolean downloaded) {
+        isDownloaded = downloaded;
     }
 
     public String getUrl() {
@@ -50,9 +64,13 @@ public class Page {
         this.bitmap = bitmap;
     }
 
+    public AtomicInteger getFailTimes() {
+        return failTimes;
+    }
+
     @NonNull
     @Override
     public String toString() {
-        return url;
+        return String.format(Locale.CHINA, "%s_%s,%s", chapterName, pageName, isDownloaded);
     }
 }

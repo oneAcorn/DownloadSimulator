@@ -11,10 +11,10 @@ public class LogUtil {
     private static final String TAG = "beaver";
 
     public static void i(String msg) {
-        System.out.println(new Date(System.currentTimeMillis()).toString() + ":" + msg);
+        System.out.println(Thread.currentThread().getName() + " " + new Date(System.currentTimeMillis()).toString() + ":" + msg);
     }
 
     public static void e(String msg) {
-        System.out.println(new Date(System.currentTimeMillis()).toString() + ":" + "Error!! " + msg);
+        System.out.println(Thread.currentThread().getName() + " " + new Date(System.currentTimeMillis()).toString() + ":" + "Error!! " + msg);
     }
 }

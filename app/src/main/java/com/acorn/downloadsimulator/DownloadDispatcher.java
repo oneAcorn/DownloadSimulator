@@ -5,9 +5,12 @@ import com.acorn.downloadsimulator.bean.Page;
 import com.acorn.downloadsimulator.blockConcurrent.Consumer;
 import com.acorn.downloadsimulator.blockConcurrent.Storage;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -15,8 +18,9 @@ import java.util.concurrent.Executors;
  * Created by acorn on 2020/4/11.
  */
 public class DownloadDispatcher implements Consumer.IDispatcher<Page> {
-    private ExecutorService mExecutorService = Executors.newFixedThreadPool(30);
+    private ExecutorService mExecutorService = Executors.newFixedThreadPool(8);
     private List<Chapter> mChapters;
+    private List<Chapter> removedChapters;
     private boolean isFinished = false;
 
     public static void main(String[] args) {
@@ -26,7 +30,7 @@ public class DownloadDispatcher implements Consumer.IDispatcher<Page> {
 
     public static List<Chapter> generateTestChapters() {
         List<Chapter> chapters = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 15; i++) {
             chapters.add(new Chapter("url/" + i, "chapter:" + i));
         }
         return chapters;
@@ -34,6 +38,7 @@ public class DownloadDispatcher implements Consumer.IDispatcher<Page> {
 
     public void execute(List<Chapter> chapters) {
         mChapters = chapters;
+        removedChapters = new Vector<>();
         Storage<Page> storage = new Storage<>(30);
         mExecutorService.execute(new PageProducer(storage, chapters));
         for (int i = 0; i < 30; i++) {
@@ -43,24 +48,38 @@ public class DownloadDispatcher implements Consumer.IDispatcher<Page> {
 
     @Override
     public void finish(Page page) {
-        synchronized (this) {
-            Iterator<Chapter> iterator = mChapters.iterator();
-            while (iterator.hasNext()) {
-                Chapter chapter = iterator.next();
-                if (chapter.getChapterName().equals(page.getChapterName())) {
-                    if (!chapter.getPages().remove(page)) throw new AssertionError("没这个?!");
-                }
-                if (chapter.isResoved() && chapter.getPages().size() == 0) { //此章节下载完成
-                    //不要使用mChapters.remove(chapter),会导致ConcurrentModificationException
-                    iterator.remove();
-                    LogUtil.i(chapter.getChapterName() + " 下载完成");
-                }
+        for (Chapter chapter : mChapters) {
+            int downloadCount = 0;
+            if (chapter.getChapterName().equals(page.getChapterName())) {
+                LogUtil.i("remove " + page);
+                downloadCount = chapter.getDownloadedCount().incrementAndGet();
+            }
+            if (chapter.isResoved() && chapter.getPageCount() == downloadCount) { //此章节下载完成
+                LogUtil.i("remove 章节" + page);
+                //不要使用mChapters.remove(chapter),会导致ConcurrentModificationException,使用CopyOnWriteArrayList也可以
+                removedChapters.add(chapter);
+//                    mChapters.remove(chapter);
+                LogUtil.i(chapter + " 下载完成");
             }
         }
-        if (mChapters.size() == 0) {
+        if (mChapters.size() == removedChapters.size()) {
             isFinished = true;
             mExecutorService.shutdownNow();
-            LogUtil.i("结束");
+            LogUtil.i("---------------------------下载结果-------------------------------");
+            int titleDownload = 0, titleCount = 0;
+            for (Chapter chapter : mChapters) {
+                LogUtil.i(chapter.toString());
+                titleCount += chapter.getPageCount();
+                StringBuilder sb = new StringBuilder();
+                for (Page p : chapter.getPages()) {
+                    titleDownload += p.isDownloaded() ? 1 : 0;
+                    sb.append(p.toString());
+                    sb.append(" ");
+                }
+                LogUtil.i(sb.toString());
+            }
+            DecimalFormat df = new DecimalFormat("0.##");
+            LogUtil.i(String.format(Locale.CHINA, "成功率:%s%%", df.format((float) titleDownload / (float) titleCount * 100f)));
         }
     }
 
