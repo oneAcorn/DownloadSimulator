@@ -4,10 +4,11 @@ import com.acorn.downloadsimulator.bean.Chapter;
 import com.acorn.downloadsimulator.bean.Page;
 import com.acorn.downloadsimulator.blockConcurrent.Consumer;
 import com.acorn.downloadsimulator.blockConcurrent.Storage;
+import com.acorn.downloadsimulator.resover.BurstChapterParseStrategy;
+import com.acorn.downloadsimulator.resover.NormalChapterParseStrategy;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Vector;
@@ -40,7 +41,7 @@ public class DownloadDispatcher implements Consumer.IDispatcher<Page> {
         mChapters = chapters;
         removedChapters = new Vector<>();
         Storage<Page> storage = new Storage<>(30);
-        mExecutorService.execute(new PageProducer(storage, chapters));
+        mExecutorService.execute(new PageProducer(storage, chapters, new NormalChapterParseStrategy()));
         for (int i = 0; i < 30; i++) {
             mExecutorService.execute(new PageConsumer(storage, this));
         }
@@ -51,14 +52,12 @@ public class DownloadDispatcher implements Consumer.IDispatcher<Page> {
         for (Chapter chapter : mChapters) {
             int downloadCount = 0;
             if (chapter.getChapterName().equals(page.getChapterName())) {
-                LogUtil.i("remove " + page);
+                //下载完成一页,已下载数原子自增1
                 downloadCount = chapter.getDownloadedCount().incrementAndGet();
             }
             if (chapter.isResoved() && chapter.getPageCount() == downloadCount) { //此章节下载完成
-                LogUtil.i("remove 章节" + page);
                 //不要使用mChapters.remove(chapter),会导致ConcurrentModificationException,使用CopyOnWriteArrayList也可以
                 removedChapters.add(chapter);
-//                    mChapters.remove(chapter);
                 LogUtil.i(chapter + " 下载完成");
             }
         }

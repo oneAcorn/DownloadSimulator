@@ -30,7 +30,7 @@ public class PageConsumer extends Consumer<Page> {
 
     private void saveBitmap(Page page, IDispatcher<Page> dispatcher) throws InterruptedException {
         Thread.sleep(mRandom.nextInt(2500) + 200);
-        if (mRandom.nextInt(100) > -1) { //TODO Version2.0 添加重试机制
+        if (mRandom.nextInt(100) > -1) { //TODO Version1.1 添加重试机制
             LogUtil.i("Consumer saveBitmap " + page + " finished");
             page.setDownloaded(true);
             dispatcher.finish(page);
