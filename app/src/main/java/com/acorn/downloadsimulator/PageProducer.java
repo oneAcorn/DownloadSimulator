@@ -2,6 +2,8 @@ package com.acorn.downloadsimulator;
 
 import com.acorn.downloadsimulator.bean.Chapter;
 import com.acorn.downloadsimulator.bean.Page;
+import com.acorn.downloadsimulator.blockConcurrent.Producer;
+import com.acorn.downloadsimulator.blockConcurrent.Storage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,17 +11,16 @@ import java.util.List;
 /**
  * Created by acorn on 2020/4/11.
  */
-public class PageProducer implements Runnable {
+public class PageProducer extends Producer<Page> {
     private final List<Chapter> mChapters;
-    private final PageStorage mStorage;
 
-    public PageProducer(PageStorage storage, List<Chapter> chapters) {
+    public PageProducer(Storage<Page> storage, List<Chapter> chapters) {
+        super(storage);
         mChapters = chapters;
-        mStorage = storage;
     }
 
     @Override
-    public void run() {
+    protected void execute(final Storage<Page> storage) {
         for (final Chapter chapter : mChapters) {
             ChapterResover.resoveChapter(chapter, new ChapterResover.OnChapterResoveListener() {
                 @Override
@@ -30,7 +31,7 @@ public class PageProducer implements Runnable {
                             chapter.setPages(new ArrayList<Page>());
                         }
                         chapter.getPages().add(page);
-                        mStorage.put(page);
+                        storage.put(page);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                         LogUtil.e("Producer error:" + e.getMessage());

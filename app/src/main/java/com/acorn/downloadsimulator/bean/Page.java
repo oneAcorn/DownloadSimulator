@@ -1,5 +1,7 @@
 package com.acorn.downloadsimulator.bean;
 
+import androidx.annotation.NonNull;
+
 /**
  * Created by acorn on 2020/4/11.
  */
@@ -46,5 +48,11 @@ public class Page {
 
     public void setBitmap(String bitmap) {
         this.bitmap = bitmap;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return url;
     }
 }

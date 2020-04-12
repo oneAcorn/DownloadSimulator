@@ -1,35 +1,22 @@
 package com.acorn.downloadsimulator;
 
-import android.util.Log;
-
 import com.acorn.downloadsimulator.bean.Page;
+import com.acorn.downloadsimulator.blockConcurrent.Consumer;
+import com.acorn.downloadsimulator.blockConcurrent.Storage;
 
 import java.util.Random;
 
 /**
- * Created by acorn on 2020/4/11.
+ * Created by acorn on 2020/4/12.
  */
-public class PageConsumer implements Runnable {
-    private final PageStorage mStorage;
-    private final DownloadDispatcher mDispatcher;
-
-    public PageConsumer(PageStorage storage, DownloadDispatcher dispatcher) {
-        mStorage = storage;
-        mDispatcher = dispatcher;
+public class PageConsumer extends Consumer<Page> {
+    public PageConsumer(Storage<Page> storage, IDispatcher<Page> dispatcher) {
+        super(storage, dispatcher);
     }
 
     @Override
-    public void run() {
-        try {
-            while (!mDispatcher.isFinished) {
-                LogUtil.i("Consumer take");
-                Page page = mStorage.take();
-                saveBitmap(downloadBitmap(page));
-            }
-        } catch (InterruptedException e) {
-//            e.printStackTrace();
-            LogUtil.e("线程" + Thread.currentThread().getName() + "终止");
-        }
+    protected void execute(Page page, IDispatcher<Page> dispatcher) throws InterruptedException {
+        saveBitmap(downloadBitmap(page), dispatcher);
     }
 
     private Page downloadBitmap(Page page) throws InterruptedException {
@@ -39,9 +26,9 @@ public class PageConsumer implements Runnable {
         return page;
     }
 
-    private void saveBitmap(Page page) throws InterruptedException {
+    private void saveBitmap(Page page, IDispatcher<Page> dispatcher) throws InterruptedException {
         Thread.sleep(new Random().nextInt(2500) + 200);
         LogUtil.i("Consumer saveBitmap " + page.getUrl() + " finished");
-        mDispatcher.finish(page);
+        dispatcher.finish(page);
     }
 }

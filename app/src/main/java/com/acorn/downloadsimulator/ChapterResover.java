@@ -3,8 +3,6 @@ package com.acorn.downloadsimulator;
 import com.acorn.downloadsimulator.bean.Chapter;
 import com.acorn.downloadsimulator.bean.Page;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 /**
