@@ -3,26 +3,32 @@ package com.acorn.downloadsimulator;
 import com.acorn.downloadsimulator.bean.Chapter;
 import com.acorn.downloadsimulator.bean.Page;
 import com.acorn.downloadsimulator.blockConcurrent.Consumer;
+import com.acorn.downloadsimulator.blockConcurrent.Producer;
 import com.acorn.downloadsimulator.blockConcurrent.Storage;
-import com.acorn.downloadsimulator.resover.BurstChapterParseStrategy;
 import com.acorn.downloadsimulator.resover.NormalChapterParseStrategy;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Vector;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by acorn on 2020/4/11.
  */
-public class DownloadDispatcher implements Consumer.IDispatcher<Page> {
-    private ExecutorService mExecutorService = Executors.newFixedThreadPool(8);
+public class DownloadDispatcher implements Consumer.IDispatcher, Producer.OnProduceListener {
+    //总线程数
+    private final int threadCount = 8;
+    //生产者线程数
+    private int producerCount = 2;
+    private AtomicInteger remainingProducerCount = new AtomicInteger();
+    private ExecutorService mExecutorService = Executors.newFixedThreadPool(threadCount);
     private List<Chapter> mChapters;
-    private List<Chapter> removedChapters;
     private boolean isFinished = false;
+    private Storage<Page> storage;
 
     public static void main(String[] args) {
         DownloadDispatcher dispatcher = new DownloadDispatcher();
@@ -31,7 +37,7 @@ public class DownloadDispatcher implements Consumer.IDispatcher<Page> {
 
     public static List<Chapter> generateTestChapters() {
         List<Chapter> chapters = new ArrayList<>();
-        for (int i = 0; i < 15; i++) {
+        for (int i = 0; i < 10; i++) {
             chapters.add(new Chapter("url/" + i, "chapter:" + i));
         }
         return chapters;
@@ -39,39 +45,57 @@ public class DownloadDispatcher implements Consumer.IDispatcher<Page> {
 
     public void execute(List<Chapter> chapters) {
         mChapters = chapters;
-        removedChapters = new Vector<>();
-        Storage<Page> storage = new Storage<>(30);
-        mExecutorService.execute(new PageProducer(storage, chapters, new NormalChapterParseStrategy()));
-        for (int i = 0; i < 30; i++) {
+        storage = new Storage<>(30);
+
+        int chapterSize = chapters.size();
+        if (producerCount >= chapterSize) {
+            producerCount = chapterSize;
+        }
+        //消费者线程数
+        int consumerCount = threadCount - producerCount;
+        if (consumerCount <= 0) {
+            throw new IllegalArgumentException("生产者的线程数大于等于总线程数");
+        }
+
+        int firstIndex = 0;
+        int step = chapterSize / producerCount;
+        int lastIndex = step;
+        for (int i = 0; i < producerCount; i++) {
+            if (i == producerCount - 1) {
+                lastIndex = chapterSize;
+            }
+            List<Chapter> chapterForProducer = new CopyOnWriteArrayList<>();
+            for (int j = firstIndex; j < lastIndex; j++) {
+                chapterForProducer.add(chapters.get(j));
+            }
+            mExecutorService.execute(new PageProducer(storage, chapterForProducer, new NormalChapterParseStrategy(), this));
+            remainingProducerCount.incrementAndGet();
+            firstIndex = lastIndex;
+
+            lastIndex += step;
+        }
+
+        for (int i = 0; i < threadCount; i++) {
             mExecutorService.execute(new PageConsumer(storage, this));
         }
     }
 
     @Override
-    public void finish(Page page) {
-        for (Chapter chapter : mChapters) {
-            int downloadCount = 0;
-            if (chapter.getChapterName().equals(page.getChapterName())) {
-                //下载完成一页,已下载数原子自增1
-                downloadCount = chapter.getDownloadedCount().incrementAndGet();
-            }
-            if (chapter.isResoved() && chapter.getPageCount() == downloadCount) { //此章节下载完成
-                //不要使用mChapters.remove(chapter),会导致ConcurrentModificationException,使用CopyOnWriteArrayList也可以
-                removedChapters.add(chapter);
-                LogUtil.i(chapter + " 下载完成");
-            }
-        }
-        if (mChapters.size() == removedChapters.size()) {
-            isFinished = true;
-            mExecutorService.shutdownNow();
-            LogUtil.i("---------------------------下载结果-------------------------------");
+    public boolean isFinished() {
+        return isFinished;
+    }
+
+    @Override
+    public void onProduceFinished() {
+        int remainingCount = remainingProducerCount.decrementAndGet();
+        if (remainingCount == 0 && storage.isEmpty()) {//全部下载完成
             int titleDownload = 0, titleCount = 0;
             for (Chapter chapter : mChapters) {
                 LogUtil.i(chapter.toString());
                 titleCount += chapter.getPageCount();
                 StringBuilder sb = new StringBuilder();
                 for (Page p : chapter.getPages()) {
-                    titleDownload += p.isDownloaded() ? 1 : 0;
+                    titleDownload += p.getState().get() == 1 ? 1 : 0;
                     sb.append(p.toString());
                     sb.append(" ");
                 }
@@ -79,11 +103,10 @@ public class DownloadDispatcher implements Consumer.IDispatcher<Page> {
             }
             DecimalFormat df = new DecimalFormat("0.##");
             LogUtil.i(String.format(Locale.CHINA, "成功率:%s%%", df.format((float) titleDownload / (float) titleCount * 100f)));
-        }
-    }
 
-    @Override
-    public boolean isFinished() {
-        return isFinished;
+            isFinished = true;
+            mExecutorService.shutdownNow();
+        }
+
     }
 }

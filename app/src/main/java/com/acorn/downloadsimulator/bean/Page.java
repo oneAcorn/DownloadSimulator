@@ -14,9 +14,11 @@ public class Page {
     private String chapterName;
     //假装自己是bitmap
     private String bitmap;
-    private boolean isDownloaded;
+
     //失败次数
     private final AtomicInteger failTimes = new AtomicInteger();
+    //0 未知,1 成功,2 失败
+    private final AtomicInteger state = new AtomicInteger(0);
 
     public Page(String url, String pageName, String chapterName) {
         this.url = url;
@@ -24,12 +26,8 @@ public class Page {
         this.chapterName = chapterName;
     }
 
-    public synchronized boolean isDownloaded() {
-        return isDownloaded;
-    }
-
-    public synchronized void setDownloaded(boolean downloaded) {
-        isDownloaded = downloaded;
+    public AtomicInteger getState() {
+        return state;
     }
 
     public String getUrl() {
@@ -71,6 +69,6 @@ public class Page {
     @NonNull
     @Override
     public String toString() {
-        return String.format(Locale.CHINA, "%s_%s,%s", chapterName, pageName, isDownloaded);
+        return String.format(Locale.CHINA, "%s_%s", chapterName, pageName);
     }
 }

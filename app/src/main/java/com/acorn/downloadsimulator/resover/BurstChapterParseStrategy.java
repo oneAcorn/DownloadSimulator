@@ -15,7 +15,7 @@ public class BurstChapterParseStrategy implements IParserStrategy<Chapter, Page>
         Random random = new Random();
         int pageCount = random.nextInt(13) + 17; //随机生成每章节页数,在17-29页间
         try {
-            Thread.sleep(pageCount * (random.nextInt(100) + 100));
+            Thread.sleep(pageCount * (random.nextInt(1) + 1));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

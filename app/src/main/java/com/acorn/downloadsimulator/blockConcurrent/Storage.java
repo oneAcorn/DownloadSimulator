@@ -2,7 +2,6 @@ package com.acorn.downloadsimulator.blockConcurrent;
 
 import com.acorn.downloadsimulator.LogUtil;
 
-import java.security.PublicKey;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 

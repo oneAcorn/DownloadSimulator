@@ -7,9 +7,9 @@ import com.acorn.downloadsimulator.LogUtil;
  */
 public abstract class Consumer<T> implements Runnable {
     private final Storage<T> mStorage;
-    private final IDispatcher<T> mDispatcher;
+    private final IDispatcher mDispatcher;
 
-    public Consumer(Storage<T> storage, IDispatcher<T> dispatcher) {
+    public Consumer(Storage<T> storage, IDispatcher dispatcher) {
         mStorage = storage;
         mDispatcher = dispatcher;
     }
@@ -19,7 +19,7 @@ public abstract class Consumer<T> implements Runnable {
         try {
             while (!mDispatcher.isFinished()) {
                 T t = mStorage.take();
-                execute(t, mDispatcher);
+                execute(t);
             }
         } catch (InterruptedException e) {
 //            e.printStackTrace();
@@ -27,12 +27,10 @@ public abstract class Consumer<T> implements Runnable {
         }
     }
 
-    protected abstract void execute(T t, IDispatcher<T> dispatcher) throws InterruptedException;
+    protected abstract void execute(T t) throws InterruptedException;
 
 
-    public interface IDispatcher<T> {
-        void finish(T t);
-
+    public interface IDispatcher {
         boolean isFinished();
     }
 }
