@@ -1,14 +1,12 @@
-package com.acorn.downloadsimulator;
+package com.acorn.downloadsimulator.blockConcurrent;
 
 import com.acorn.downloadsimulator.bean.Chapter;
 import com.acorn.downloadsimulator.bean.Page;
-import com.acorn.downloadsimulator.blockConcurrent.Node;
-import com.acorn.downloadsimulator.blockConcurrent.Producer;
-import com.acorn.downloadsimulator.blockConcurrent.Storage;
 import com.acorn.downloadsimulator.resover.BurstChapterParseStrategy;
 import com.acorn.downloadsimulator.resover.ChapterParser;
 import com.acorn.downloadsimulator.resover.IParserStrategy;
 import com.acorn.downloadsimulator.resover.OnParseListener;
+import com.acorn.downloadsimulator.utils.LogUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +36,7 @@ public class PageProducer extends Producer<Page> {
     protected void execute(final Storage<Page> storage) {
         //把所有章节解析为页
         for (final Chapter chapter : mChapters) {
-            LogUtil.i("Producer chapter " + chapter);
+            LogUtil.output("Producer chapter " + chapter);
             mChapterParser.parse(chapter, new OnParseListener<Page>() {
                 @Override
                 public void onParsed(Page page) {
@@ -49,7 +47,7 @@ public class PageProducer extends Producer<Page> {
                         storage.put(page);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
-                        LogUtil.e("Producer error:" + e.getMessage());
+                        LogUtil.outputError("Producer error:" + e.getMessage());
                     }
 
                 }
@@ -78,7 +76,7 @@ public class PageProducer extends Producer<Page> {
             }
             node = node.next;
         }
-        LogUtil.i("Producer 完工");
+        LogUtil.output("Producer 完工");
     }
 
     /**

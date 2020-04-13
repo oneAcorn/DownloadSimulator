@@ -1,11 +1,10 @@
-package com.acorn.downloadsimulator;
+package com.acorn.downloadsimulator.blockConcurrent;
 
 import com.acorn.downloadsimulator.bean.Chapter;
 import com.acorn.downloadsimulator.bean.Page;
-import com.acorn.downloadsimulator.blockConcurrent.Consumer;
-import com.acorn.downloadsimulator.blockConcurrent.Producer;
-import com.acorn.downloadsimulator.blockConcurrent.Storage;
+import com.acorn.downloadsimulator.resover.BurstChapterParseStrategy;
 import com.acorn.downloadsimulator.resover.NormalChapterParseStrategy;
+import com.acorn.downloadsimulator.utils.LogUtil;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -66,7 +65,7 @@ public class DownloadDispatcher implements Consumer.IDispatcher, Producer.OnProd
             for (int j = firstIndex; j < lastIndex; j++) {
                 chapterForProducer.add(chapters.get(j));
             }
-            mExecutorService.execute(new PageProducer(storage, chapterForProducer, new NormalChapterParseStrategy(), this));
+            mExecutorService.execute(new PageProducer(storage, chapterForProducer, new BurstChapterParseStrategy(), this));
             remainingProducerCount.incrementAndGet();
             firstIndex = lastIndex;
 
@@ -89,7 +88,7 @@ public class DownloadDispatcher implements Consumer.IDispatcher, Producer.OnProd
         if (remainingCount == 0 && storage.isEmpty()) {//全部下载完成
             int titleDownload = 0, titleCount = 0;
             for (Chapter chapter : mChapters) {
-                LogUtil.i(chapter.toString());
+                LogUtil.output(chapter.toString());
                 titleCount += chapter.getPageCount();
                 StringBuilder sb = new StringBuilder();
                 for (Page p : chapter.getPages()) {
@@ -97,10 +96,10 @@ public class DownloadDispatcher implements Consumer.IDispatcher, Producer.OnProd
                     sb.append(p.toString());
                     sb.append(" ");
                 }
-                LogUtil.i(sb.toString());
+                LogUtil.output(sb.toString());
             }
             DecimalFormat df = new DecimalFormat("0.##");
-            LogUtil.i(String.format(Locale.CHINA, "成功率:%s%%", df.format((float) titleDownload / (float) titleCount * 100f)));
+            LogUtil.output(String.format(Locale.CHINA, "成功率:%s%%", df.format((float) titleDownload / (float) titleCount * 100f)));
 
             isFinished = true;
             mExecutorService.shutdownNow();

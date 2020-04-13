@@ -1,6 +1,6 @@
 package com.acorn.downloadsimulator.blockConcurrent;
 
-import com.acorn.downloadsimulator.LogUtil;
+import com.acorn.downloadsimulator.utils.LogUtil;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -17,13 +17,13 @@ public class Storage<T> {
 
     public T take() throws InterruptedException {
         T t = mBlockingQueue.take();
-        LogUtil.i("Storage take:" + t.toString() + ",Capacity:" + mBlockingQueue.remainingCapacity());
+        LogUtil.output("Storage take:" + t.toString() + ",Capacity:" + mBlockingQueue.remainingCapacity());
         return t;
     }
 
     public void put(T t) throws InterruptedException {
         mBlockingQueue.put(t);
-        LogUtil.i("Storage put:" + t.toString() + ",Capacity:" + mBlockingQueue.remainingCapacity());
+        LogUtil.output("Storage put:" + t.toString() + ",Capacity:" + mBlockingQueue.remainingCapacity());
     }
 
     public int remainingCapacity() {

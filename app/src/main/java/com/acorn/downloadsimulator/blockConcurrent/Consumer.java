@@ -1,6 +1,6 @@
 package com.acorn.downloadsimulator.blockConcurrent;
 
-import com.acorn.downloadsimulator.LogUtil;
+import com.acorn.downloadsimulator.utils.LogUtil;
 
 /**
  * Created by acorn on 2020/4/11.
@@ -23,7 +23,7 @@ public abstract class Consumer<T> implements Runnable {
             }
         } catch (InterruptedException e) {
 //            e.printStackTrace();
-            LogUtil.e("线程终止");
+            LogUtil.outputError("线程终止");
         }
     }
 

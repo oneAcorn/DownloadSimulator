@@ -1,4 +1,4 @@
-package com.acorn.downloadsimulator;
+package com.acorn.downloadsimulator.utils;
 
 import android.util.Log;
 
@@ -10,11 +10,11 @@ import java.util.Date;
 public class LogUtil {
     private static final String TAG = "beaver";
 
-    public static void i(String msg) {
+    public static void output(String msg) {
         System.out.println(Thread.currentThread().getName() + " " + new Date(System.currentTimeMillis()).toString() + ":" + msg);
     }
 
-    public static void e(String msg) {
+    public static void outputError(String msg) {
         System.out.println(Thread.currentThread().getName() + " " + new Date(System.currentTimeMillis()).toString() + ":" + "Error!! " + msg);
     }
 }
