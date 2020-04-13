@@ -51,9 +51,7 @@ public class DownloadDispatcher implements Consumer.IDispatcher, Producer.OnProd
         if (producerCount >= chapterSize) {
             producerCount = chapterSize;
         }
-        //消费者线程数
-        int consumerCount = threadCount - producerCount;
-        if (consumerCount <= 0) {
+        if (producerCount >= threadCount) {
             throw new IllegalArgumentException("生产者的线程数大于等于总线程数");
         }
 
