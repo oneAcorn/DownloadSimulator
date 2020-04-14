@@ -17,4 +17,8 @@ public class LogUtil {
     public static void outputError(String msg) {
         System.out.println(Thread.currentThread().getName() + " " + new Date(System.currentTimeMillis()).toString() + ":" + "Error!! " + msg);
     }
+
+    public static void d(String msg) {
+        Log.d(TAG, msg);
+    }
 }

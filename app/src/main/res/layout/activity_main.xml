@@ -16,4 +16,13 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <Button
+        android:id="@+id/startSimulatorBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="startSimulatorActivity"
+        android:textAllCaps="false"
+        app:layout_constraintLeft_toLeftOf="@id/startServiceBtn"
+        app:layout_constraintTop_toBottomOf="@id/startServiceBtn" />
 </androidx.constraintlayout.widget.ConstraintLayout>
